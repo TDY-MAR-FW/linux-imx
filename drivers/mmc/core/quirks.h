@@ -137,6 +137,13 @@ static const struct mmc_fixup __maybe_unused mmc_blk_fixups[] = {
 	MMC_FIXUP("M62704", CID_MANFID_KINGSTON, 0x0100, add_quirk_mmc,
 		  MMC_QUIRK_TRIM_BROKEN),
 
+       /*
+        * ESMT FC51L04SMSA supports TRIM but does not appear to support
+        * WRITE_ZEROES offloading.
+        */
+       MMC_FIXUP("SM0000", CID_MANFID_ESMT, CID_OEMID_ANY, add_quirk_mmc,
+                 MMC_QUIRK_TRIM_BROKEN),
+
 	/*
 	 * Some SD cards reports discard support while they don't
 	 */
