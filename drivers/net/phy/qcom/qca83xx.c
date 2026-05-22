@@ -163,20 +163,6 @@ static int qca83xx_resume(struct phy_device *phydev)
 	/* Reinit the port, reset values set by suspend */
 	qca83xx_config_init(phydev);
 
-	/* Only perform a hard reset when the PHY was actually powered down
-	 * (BMCR_PDOWN set). If it was not powered down, e.g. during a
-	 * network interface restart where qca8337_suspend() intentionally
-	 * skips genphy_suspend(), skip the reset to avoid the 300-600 ms
-	 * autoneg recovery delay. In that case the PHY hardware maintained
-	 * its link state across the suspend/resume cycle so we only need to
-	 * ensure BMCR_PDOWN and BMCR_ISOLATE are clear.
-	 */
-	val = phy_read(phydev, MII_BMCR);
-	if (val < 0 || !(val & BMCR_PDOWN)) {
-		phy_clear_bits(phydev, MII_BMCR, BMCR_PDOWN | BMCR_ISOLATE);
-		return 0;
-	}
-
 	/* Reset the port on port resume */
 	phy_set_bits(phydev, MII_BMCR, BMCR_RESET | BMCR_ANENABLE);
 
@@ -207,15 +193,9 @@ static int qca83xx_suspend(struct phy_device *phydev)
 
 static int qca8337_suspend(struct phy_device *phydev)
 {
-	/* Do not call genphy_suspend() here. Setting BMCR_PDOWN causes the
-	 * PHY to lose its link state, which forces a full autoneg cycle
-	 * (up to 600 ms) on the next phy_start(). For an internal switch PHY
-	 * that is a bridge member, this carrier absence window causes
-	 * systemd-networkd's DHCP client to fail and, after repeated network
-	 * restarts, hit its retry threshold and stop managing the interface.
-	 * The qca83xx_suspend() call still applies the necessary hibernation
-	 * register adjustments without touching BMCR.
-	 */
+	/* Only QCA8337 support actual suspend. */
+	genphy_suspend(phydev);
+
 	return qca83xx_suspend(phydev);
 }
 
