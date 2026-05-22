@@ -1417,6 +1417,15 @@ static void qca8k_phylink_get_caps(struct dsa_switch *ds, int port,
 			  config->supported_interfaces);
 		__set_bit(PHY_INTERFACE_MODE_INTERNAL,
 			  config->supported_interfaces);
+		/* The internal PHYs are owned by the switch and their power
+		 * state should be managed by the switch driver, not by the
+		 * generic MDIO bus PM layer.  Setting mac_managed_pm prevents
+		 * mdio_bus_phy_suspend() from independently calling
+		 * phy_suspend() during system PM, which would power the PHY
+		 * down via BMCR_PDOWN and force a lengthy autoneg recovery
+		 * (300-600 ms) on the next phy_start().
+		 */
+		config->mac_managed_pm = true;
 		break;
 
 	case 6: /* 2nd CPU port / external PHY */
